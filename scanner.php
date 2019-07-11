@@ -7,7 +7,8 @@ if(php_sapi_name() !== 'cli'){
     die("this script can only run from cli. look at the db to see how it's going, should be named: ".DB_FILE_NAME);
 }
 $scan_id_start=0;
-//$scan_id_start=186605-1;
+//9900K: $scan_id_start=186605-1;
+$scan_id_start=1918-1;
 const SCAN_ID_MAX=9999999;
 function json_encode_pretty($data):string{
     return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | (defined("JSON_UNESCAPED_LINE_TERMINATORS") ? JSON_UNESCAPED_LINE_TERMINATORS : 0 ));
@@ -25,7 +26,8 @@ function parse_intel_html(string $html):array{
 }
 hhb_init();
 $hc=new hhb_curl('',true);
-$hc->setopt_array(array(CURLOPT_TIMEOUT=>20));
+$hc->setopt_array(array(CURLOPT_TIMEOUT=>8));
+
 if(!file_exists(DB_FILE_NAME)){
     if(0!==file_put_contents(DB_FILE_NAME,"",LOCK_EX)){
         die("error: db file does not exist and unable to create db file!");
@@ -64,7 +66,13 @@ for($id=$scan_id_start;$id<SCAN_ID_MAX;++$id){
         continue;
     }
     echo "\r{$id}: ";
-    $hc->exec('https://ark.intel.com/content/www/us/en/ark/products/'.$id.'/C.html');
+    try{
+        $hc->exec('https://ark.intel.com/content/www/us/en/ark/products/'.$id.'/C.html');
+    }catch(\RuntimeException $ex){
+        // super rare: 
+        // 1918: PHP Fatal error:  Uncaught RuntimeException: curl_exec failed. errno: 28 error: 'Operation timed out after 20001 milliseconds with 0 bytes received' in /usr/share/php/hhb_.inc.php:585
+        $hc->exec('https://ark.intel.com/content/www/us/en/ark/products/'.$id.'/C.html');
+    }
     //$hc->setopt_array(array(CURLOPT_NOBODY=>false, CURLOPT_HTTPGET=>true));
     //hhb_var_dump($hc->getStdErr(),$hc->getStdOut()) & die();
     $code=$hc->getinfo(CURLINFO_HTTP_CODE);
@@ -78,7 +86,15 @@ for($id=$scan_id_start;$id<SCAN_ID_MAX;++$id){
     }elseif($code===301){
         echo " valid product id, but is it a processor?";
         // HTTP HEAD requests dont get all the info we need, sooooo
-        $html=$hc->setopt_array(array(CURLOPT_NOBODY=>false, CURLOPT_HTTPGET=>true,CURLOPT_FOLLOWLOCATION=>true))->exec()->getStdOut();
+        $hc->setopt_array(array(CURLOPT_NOBODY=>false, CURLOPT_HTTPGET=>true,CURLOPT_FOLLOWLOCATION=>true));
+        try{
+            $html=$hc->exec()->getStdOut();
+        }catch(\RuntimeException $ex){
+        // super rare: 
+        // 1918: PHP Fatal error:  Uncaught RuntimeException: curl_exec failed. errno: 28 error: 'Operation timed out after 20001 milliseconds with 0 bytes received' in /usr/share/php/hhb_.inc.php:585
+            $html=$hc->exec()->getStdOut();
+        }
+
         $hc->setopt_array(array(CURLOPT_HTTPGET=>false,CURLOPT_FOLLOWLOCATION=>false,CURLOPT_NOBODY=>true));
         $domd=@DOMDocument::loadHTML($html);
         $xp=new DOMXPath($domd);
