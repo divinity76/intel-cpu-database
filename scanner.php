@@ -8,7 +8,7 @@ if(php_sapi_name() !== 'cli'){
 }
 $scan_id_start=0;
 //9900K: $scan_id_start=186605-1;
-$scan_id_start=14447-1;
+$scan_id_start=24544-1;
 const SCAN_ID_MAX=9999999;
 function json_encode_pretty($data):string{
     return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | (defined("JSON_UNESCAPED_LINE_TERMINATORS") ? JSON_UNESCAPED_LINE_TERMINATORS : 0 ));
@@ -66,17 +66,21 @@ for($id=$scan_id_start;$id<SCAN_ID_MAX;++$id){
         continue;
     }
     echo "\r{$id}: ";
-    try{
-        $hc->exec('https://ark.intel.com/content/www/us/en/ark/products/'.$id.'/C.html');
-    }catch(\RuntimeException $ex){
-        // super rare: 
-        // 1918: PHP Fatal error:  Uncaught RuntimeException: curl_exec failed. errno: 28 error: 'Operation timed out after 20001 milliseconds with 0 bytes received' in /usr/share/php/hhb_.inc.php:585
+    $success=false;
+    for($retry_loop_counter=0;$retry_loop_counter<100;++$retry_loop_counter){
         try{
             $hc->exec('https://ark.intel.com/content/www/us/en/ark/products/'.$id.'/C.html');
+            $success=true;
+            break;
         }catch(\RuntimeException $ex){
-            $hc->exec('https://ark.intel.com/content/www/us/en/ark/products/'.$id.'/C.html');
+            echo ".";
+            sleep(2);
         }
     }
+    if(!$success){
+        throw $ex;
+    }
+    unset($success,$retry_loop_counter);
     //$hc->setopt_array(array(CURLOPT_NOBODY=>false, CURLOPT_HTTPGET=>true));
     //hhb_var_dump($hc->getStdErr(),$hc->getStdOut()) & die();
     $code=$hc->getinfo(CURLINFO_HTTP_CODE);
@@ -91,18 +95,21 @@ for($id=$scan_id_start;$id<SCAN_ID_MAX;++$id){
         echo " valid product id, but is it a processor?";
         // HTTP HEAD requests dont get all the info we need, sooooo
         $hc->setopt_array(array(CURLOPT_NOBODY=>false, CURLOPT_HTTPGET=>true,CURLOPT_FOLLOWLOCATION=>true));
-        try{
-            $html=$hc->exec()->getStdOut();
-        }catch(\RuntimeException $ex){
-        // super rare: 
-        // 1918: PHP Fatal error:  Uncaught RuntimeException: curl_exec failed. errno: 28 error: 'Operation timed out after 20001 milliseconds with 0 bytes received' in /usr/share/php/hhb_.inc.php:585
-        try{    
-            $html=$hc->exec()->getStdOut();
-        }catch(\RuntimeException $ex){
+        $success=false;
+        for($retry_loop_counter=0;$retry_loop_counter<100;++$retry_loop_counter){
+            try{
                 $html=$hc->exec()->getStdOut();
+                $success=true;
+                break;
+            }catch(\RuntimeException $ex){
+                echo ".";
+                sleep(2);
             }
         }
-
+        if(!$success){
+            throw $ex;
+        }
+        unset($success,$retry_loop_counter);
         $hc->setopt_array(array(CURLOPT_HTTPGET=>false,CURLOPT_FOLLOWLOCATION=>false,CURLOPT_NOBODY=>true));
         $domd=@DOMDocument::loadHTML($html);
         $xp=new DOMXPath($domd);
@@ -139,5 +146,4 @@ for($id=$scan_id_start;$id<SCAN_ID_MAX;++$id){
         hhb_var_dump($hc->getStdErr(),$hc->getStdOut());
         throw new \RuntimeError("ERROR: expected HTTP 200 OR HTTP 301, BUT GOT HTTP {$code} (details printed in stdout)");
     }
-
 }
