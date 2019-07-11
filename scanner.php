@@ -8,7 +8,7 @@ if(php_sapi_name() !== 'cli'){
 }
 $scan_id_start=0;
 //9900K: $scan_id_start=186605-1;
-$scan_id_start=1918-1;
+$scan_id_start=14447-1;
 const SCAN_ID_MAX=9999999;
 function json_encode_pretty($data):string{
     return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | (defined("JSON_UNESCAPED_LINE_TERMINATORS") ? JSON_UNESCAPED_LINE_TERMINATORS : 0 ));
@@ -71,7 +71,11 @@ for($id=$scan_id_start;$id<SCAN_ID_MAX;++$id){
     }catch(\RuntimeException $ex){
         // super rare: 
         // 1918: PHP Fatal error:  Uncaught RuntimeException: curl_exec failed. errno: 28 error: 'Operation timed out after 20001 milliseconds with 0 bytes received' in /usr/share/php/hhb_.inc.php:585
-        $hc->exec('https://ark.intel.com/content/www/us/en/ark/products/'.$id.'/C.html');
+        try{
+            $hc->exec('https://ark.intel.com/content/www/us/en/ark/products/'.$id.'/C.html');
+        }catch(\RuntimeException $ex){
+            $hc->exec('https://ark.intel.com/content/www/us/en/ark/products/'.$id.'/C.html');
+        }
     }
     //$hc->setopt_array(array(CURLOPT_NOBODY=>false, CURLOPT_HTTPGET=>true));
     //hhb_var_dump($hc->getStdErr(),$hc->getStdOut()) & die();
@@ -92,7 +96,11 @@ for($id=$scan_id_start;$id<SCAN_ID_MAX;++$id){
         }catch(\RuntimeException $ex){
         // super rare: 
         // 1918: PHP Fatal error:  Uncaught RuntimeException: curl_exec failed. errno: 28 error: 'Operation timed out after 20001 milliseconds with 0 bytes received' in /usr/share/php/hhb_.inc.php:585
+        try{    
             $html=$hc->exec()->getStdOut();
+        }catch(\RuntimeException $ex){
+                $html=$hc->exec()->getStdOut();
+            }
         }
 
         $hc->setopt_array(array(CURLOPT_HTTPGET=>false,CURLOPT_FOLLOWLOCATION=>false,CURLOPT_NOBODY=>true));
