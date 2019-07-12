@@ -15,7 +15,7 @@ function json_encode_pretty($data): string
     return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | (defined("JSON_UNESCAPED_LINE_TERMINATORS") ? JSON_UNESCAPED_LINE_TERMINATORS : 0));
 }
 function filter_characters(string $str):string{
-    return trim(strtr($name, array(
+    return trim(strtr($str, array(
         '®' => '',
         '‡' => '',
         '™' => '',
