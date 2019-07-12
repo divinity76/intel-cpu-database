@@ -1,15 +1,7 @@
 <?php
-
 declare(strict_types=1);
 //system("echo ".escapeshellarg(".dump")." | sqlite3 ".escapeshellarg('intel_cpu_database.sqlite3')) & die();
-if (0) {
-    $name = trim(strtr($name, array(
-        '®' => '',
-        '‡' => '',
-        '™' => '',
-    )));
-}
-$data = json_decode(file_get_contents('intel_cpu_database.json'), true);
+$data = json_decode(file_get_contents('databases/intel_cpu_database.json'), true);
 $filter_data = function (array $data): array {
     $inner_filter=function(string $str):string{
         return trim(strtr($str, array(
@@ -47,9 +39,11 @@ $spec_names = function (array $data): array {
     return array_keys($ret);
 };
 $spec_names = $spec_names($data);
-@unlink('intel_cpu_database.sqlite3');
-$sql_fp=fopen('intel_cpu_database.sql',"wb");
-$db3 = new PDO('sqlite:intel_cpu_database.sqlite3', '', '', array(PDO::ATTR_EMULATE_PREPARES => false, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
+if(file_exists('databases/intel_cpu_database.sqlite3')){
+    unlink('databases/intel_cpu_database.sqlite3');
+}
+$sql_fp=fopen('databases/intel_cpu_database.sql',"wb");
+$db3 = new PDO('sqlite:databases/intel_cpu_database.sqlite3', '', '', array(PDO::ATTR_EMULATE_PREPARES => false, PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION));
 // SELECT * FROM intel_cpus WHERE id=(SELECT id FROM intel_cpus WHERE category='name' AND value LIKE '9900K' LIMIT 1)
 $sql = '
 DROP TABLE IF EXISTS `intel_cpus`;

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 // https://github.com/divinity76/hhb_.inc.php/blob/master/hhb_.inc.php
 require_once('hhb_.inc.php');
-const DB_FILE_NAME = 'intel_cpu_database.json';
+const DB_FILE_NAME = 'databases/intel_cpu_database.json';
 if (php_sapi_name() !== 'cli') {
     die("this script can only run from cli. look at the db to see how it's going, should be named: " . DB_FILE_NAME);
 }
