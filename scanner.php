@@ -72,7 +72,7 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
             break;
         } catch (\RuntimeException $ex) {
             echo ".";
-            sleep(2);
+            sleep(60);
         }
     }
     if (!$success) {
@@ -101,7 +101,7 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
                 break;
             } catch (\RuntimeException $ex) {
                 echo ".";
-                sleep(2);
+                sleep(60);
             }
         }
         if (!$success) {
@@ -126,7 +126,11 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
         $specs_ele = $xp->query('//div[contains(@class,"specs-section") and contains(@class,"active")]')->item(0);
         $sections = $xp->query(".//section", $specs_ele);
         //hhb_var_dump($sections) & die();
-        $data[$id]['name'] = $title;
+        $name = $title;
+        if (endsWith($name, 'Product Specifications')) {
+            $name = trim(substr($name, 0, strlen($name) - strlen('Product Specifications')));
+        }
+        $data[$id]['name'] = $name;
         foreach ($sections as $section) {
             $section_name = trim($xp->query(".//div[contains(@class,'subhead')]//h2", $section)->item(0)->textContent);
             //hhb_var_dump($section_name) & die();
@@ -144,4 +148,13 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
         hhb_var_dump($hc->getStdErr(), $hc->getStdOut());
         throw new \RuntimeException("ERROR: expected HTTP 200 OR HTTP 301, BUT GOT HTTP {$code} (details printed in stdout)");
     }
+}
+function endsWith($haystack, $needle): bool
+{
+    $length = strlen($needle);
+    if ($length == 0) {
+        return true;
+    }
+
+    return (substr($haystack, -$length) === $needle);
 }
