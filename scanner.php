@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 // https://github.com/divinity76/hhb_.inc.php/blob/master/hhb_.inc.php
 require_once('hhb_.inc.php');
@@ -14,7 +15,8 @@ function json_encode_pretty($data): string
 {
     return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | (defined("JSON_UNESCAPED_LINE_TERMINATORS") ? JSON_UNESCAPED_LINE_TERMINATORS : 0));
 }
-function filter_characters(string $str):string{
+function filter_characters(string $str): string
+{
     return trim(strtr($str, array(
         '®' => '',
         '‡' => '',
@@ -122,10 +124,10 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
         $title = trim($title->item(0)->textContent);
         if (false === stripos($title, 'Processor')) {
             // it's a product, but it's not a processor.
-            echo "not a processor. title: {$title}", PHP_EOL;
+            echo " " . "not a processor. title: {$title}", PHP_EOL;
             continue;
         }
-        echo "yes! found processor, title: {$title}";
+        echo " " . "yes! found processor, title: \"{$title}\"";
         $specs_ele = $xp->query('//div[contains(@class,"specs-section") and contains(@class,"active")]')->item(0);
         $sections = $xp->query(".//section", $specs_ele);
         //hhb_var_dump($sections) & die();
@@ -144,7 +146,7 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
                 $data[$id][$section_name][$name] = $value;
             }
         }
-        echo "parsed. adding to db..";
+        echo " " . "parsed. adding to db..";
         write_db_to_disk($data);
         echo ". done!\n";
     } else {
@@ -158,6 +160,5 @@ function endsWith($haystack, $needle): bool
     if ($length == 0) {
         return true;
     }
-
     return (substr($haystack, -$length) === $needle);
 }
