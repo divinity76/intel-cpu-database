@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 // https://github.com/divinity76/hhb_.inc.php/blob/master/hhb_.inc.php
 require_once('hhb_.inc.php');
@@ -14,6 +13,13 @@ const SCAN_ID_MAX = 9999999;
 function json_encode_pretty($data): string
 {
     return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | (defined("JSON_UNESCAPED_LINE_TERMINATORS") ? JSON_UNESCAPED_LINE_TERMINATORS : 0));
+}
+function filter_characters(string $str):string{
+    return trim(strtr($name, array(
+        '®' => '',
+        '‡' => '',
+        '™' => '',
+    )));
 }
 function write_db_to_disk(array $data, string $db_file_name = DB_FILE_NAME): void
 {
@@ -84,9 +90,6 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
     $code = $hc->getinfo(CURLINFO_HTTP_CODE);
     // found a product! but is it a CPU or is it something else? (like SSD)
     if ($code === 200) {
-        if (false && $id === 186605) {
-            hhb_var_dump($hc->getStdErr(), $hc->getStdOut()) & die();
-        }
         echo "invalid product id"; // (great 404 there intel!)
         continue;
     } elseif ($code === 301) {
@@ -130,14 +133,14 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
         if (endsWith($name, 'Product Specifications')) {
             $name = trim(substr($name, 0, strlen($name) - strlen('Product Specifications')));
         }
-        $data[$id]['name'] = $name;
+        $data[$id]['name'] = filter_characters($name);
         foreach ($sections as $section) {
-            $section_name = trim($xp->query(".//div[contains(@class,'subhead')]//h2", $section)->item(0)->textContent);
+            $section_name = filter_characters($xp->query(".//div[contains(@class,'subhead')]//h2", $section)->item(0)->textContent);
             //hhb_var_dump($section_name) & die();
             $section_value_list = $xp->query(".//ul[contains(@class,'specs-list')]/li", $section);
             foreach ($section_value_list as $give_me_a_name) {
-                $name = trim($xp->query(".//span[contains(@class,'label')]", $give_me_a_name)->item(0)->textContent);
-                $value = trim($xp->query(".//span[contains(@class,'value')]", $give_me_a_name)->item(0)->textContent);
+                $name = filter_characters($xp->query(".//span[contains(@class,'label')]", $give_me_a_name)->item(0)->textContent);
+                $value = filter_characters($xp->query(".//span[contains(@class,'value')]", $give_me_a_name)->item(0)->textContent);
                 $data[$id][$section_name][$name] = $value;
             }
         }
