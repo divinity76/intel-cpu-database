@@ -8,6 +8,7 @@ $filter_data = function (array $data): array {
             '®' => '',
             '‡' => '',
             '™' => '',
+            '*' => ''
         )));
     };
     $new_arr=array();

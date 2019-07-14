@@ -21,6 +21,7 @@ function filter_characters(string $str): string
         '®' => '',
         '‡' => '',
         '™' => '',
+        '*' => ''
     )));
 }
 function write_db_to_disk(array $data, string $db_file_name = DB_FILE_NAME): void
