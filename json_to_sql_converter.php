@@ -64,6 +64,8 @@ fwrite($sql_fp,$sql);
 
 $db3->exec($sql);
 $db3->beginTransaction();
+$sql="BEGIN EXCLUSIVE TRANSACTION;\n";
+fwrite($sql_fp,$sql);
 foreach ($data as $id => $cpu_data) {
     $sql="INSERT INTO `intel_cpus` (`id`,`name`,";
     $name=$cpu_data['name'];
@@ -86,4 +88,6 @@ foreach ($data as $id => $cpu_data) {
     fwrite($sql_fp,$sql);
     $db3->query($sql);
 }
+$sql="COMMIT;\n";
+fwrite($sql_fp,$sql);
 $db3->commit();
