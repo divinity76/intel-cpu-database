@@ -80,6 +80,7 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
             $success = true;
             break;
         } catch (\RuntimeException $ex) {
+            // this happens if we get rate-limited, when that happens, we need to wait a few minutes before we can try again.
             echo ".";
             sleep(60);
         }
@@ -106,6 +107,7 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
                 $success = true;
                 break;
             } catch (\RuntimeException $ex) {
+                // this happens if we get rate-limited, when that happens, we need to wait a few minutes before we can try again.
                 echo ".";
                 sleep(60);
             }
