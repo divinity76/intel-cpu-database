@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-// https://github.com/divinity76/hhb_.inc.php/blob/master/hhb_.inc.php
+// https://raw.githubusercontent.com/divinity76/hhb_.inc.php/master/hhb_.inc.php
 require_once('hhb_.inc.php');
 const DB_FILE_NAME = 'databases/intel_cpu_database.json';
 if (php_sapi_name() !== 'cli') {
@@ -9,7 +9,8 @@ if (php_sapi_name() !== 'cli') {
 }
 $scan_id_start = 0;
 //9900K: $scan_id_start=186605-1;
-$scan_id_start = 24544 - 1;
+//12900k: $scan_id_start = 134599 -1;
+// CONCLUSION: we have to scan the whole range every time, sigh.
 const SCAN_ID_MAX = 9999999;
 function json_encode_pretty($data): string
 {
@@ -60,7 +61,7 @@ if (true) {
         $data = json_decode($data, true);
         foreach ($data as $id => $unused) {
             if ($id > $scan_id_start) {
-                $scan_id_start = $id;
+                //$scan_id_start = $id;
             }
         }
         unset($id, $unused);
@@ -72,11 +73,12 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
         //already got info on this cpu.
         continue;
     }
+    $url = 'https://ark.intel.com/content/www/us/en/ark/products/' . $id . '/C.html';
     echo "\r{$id}: ";
     $success = false;
     for ($retry_loop_counter = 0; $retry_loop_counter < 100; ++$retry_loop_counter) {
         try {
-            $hc->exec('https://ark.intel.com/content/www/us/en/ark/products/' . $id . '/C.html');
+            $hc->exec($url);
             $success = true;
             break;
         } catch (\RuntimeException $ex) {
@@ -93,7 +95,19 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
     //hhb_var_dump($hc->getStdErr(),$hc->getStdOut()) & die();
     $code = $hc->getinfo(CURLINFO_HTTP_CODE);
     // found a product! but is it a CPU or is it something else? (like SSD)
-    if ($code === 200) {
+    if($code === 502){
+        // bad gateway.. happens extremely rarely
+        echo ".http502.";
+        --$id;
+        continue;
+    }elseif($code === 503){
+        // service unavailable.. rare
+        echo ".http503.";
+        --$id;
+        sleep(60);
+        continue;
+    }elseif ($code === 200 || $code === 404) {
+        // sometimes it reutrns 200 for 404, and sometimes it returns 404 for 404... why? no idea.
         echo "invalid product id"; // (great 404 there intel!)
         continue;
     } elseif ($code === 301) {
@@ -115,7 +129,22 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
         if (!$success) {
             throw $ex;
         }
-        unset($success, $retry_loop_counter);
+        $code = $hc->getinfo(CURLINFO_HTTP_CODE);
+        if ($code === 502) {
+            // bad gateway.. happens extremely rarely
+            echo ".http502.";
+            -- $id;
+            continue;
+        } elseif ($code === 503) {
+            // service unavailable.. rare
+            echo ".http503.";
+            -- $id;
+            sleep(60);
+            continue;
+        } elseif ($code !== 200) {
+            throw new \RuntimeException("code not 502 and not 503 and not 200, it was: {$code} - id: {$id}");
+        }
+        unset($success, $retry_loop_counter, $code);
         $hc->setopt_array(array(CURLOPT_HTTPGET => false, CURLOPT_FOLLOWLOCATION => false, CURLOPT_NOBODY => true));
         $domd = @DOMDocument::loadHTML($html);
         $xp = new DOMXPath($domd);
@@ -154,7 +183,7 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
         echo ". done!\n";
     } else {
         hhb_var_dump($hc->getStdErr(), $hc->getStdOut());
-        throw new \RuntimeException("ERROR: expected HTTP 200 OR HTTP 301, BUT GOT HTTP {$code} (details printed in stdout)");
+        throw new \RuntimeException("ERROR: expected HTTP 200 OR HTTP 301, BUT GOT HTTP {$code}, url: {$url} (details printed in stdout)");
     }
 }
 function endsWith($haystack, $needle): bool
