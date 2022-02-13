@@ -12,6 +12,7 @@ $scan_id_start = 0;
 //12900k: $scan_id_start = 134599 -1;
 // CONCLUSION: we have to scan the whole range every time, sigh.
 const SCAN_ID_MAX = 9999999;
+// 
 function json_encode_pretty($data): string
 {
     return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | (defined("JSON_UNESCAPED_LINE_TERMINATORS") ? JSON_UNESCAPED_LINE_TERMINATORS : 0));
@@ -106,8 +107,9 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
         --$id;
         sleep(60);
         continue;
-    }elseif ($code === 200 || $code === 404) {
+    }elseif ($code === 200 || $code === 404 || $code === 403) {
         // sometimes it reutrns 200 for 404, and sometimes it returns 404 for 404... why? no idea.
+        // for 96559 it returned 403...
         echo "invalid product id"; // (great 404 there intel!)
         continue;
     } elseif ($code === 301) {
