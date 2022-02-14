@@ -107,12 +107,12 @@ for ($id = $scan_id_start; $id < SCAN_ID_MAX; ++$id) {
         --$id;
         sleep(60);
         continue;
-    }elseif ($code === 200 || $code === 404 || $code === 403) {
-        // sometimes it reutrns 200 for 404, and sometimes it returns 404 for 404... why? no idea.
+    }elseif ($code === 404 || $code === 403) {
+        // sometimes it reutrns 404 for 404, and sometimes it returns 403 for 404... why? no idea.
         // for 96559 it returned 403...
         echo "invalid product id"; // (great 404 there intel!)
         continue;
-    } elseif ($code === 301) {
+    } elseif ($code === 301 || $code === 200) {
         echo " valid product id, but is it a processor?";
         // HTTP HEAD requests dont get all the info we need, sooooo
         $hc->setopt_array(array(CURLOPT_NOBODY => false, CURLOPT_HTTPGET => true, CURLOPT_FOLLOWLOCATION => true));
